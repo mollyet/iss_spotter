@@ -7,7 +7,7 @@
  *   - The IP address as a string (null if error). Example: "162.245.144.188"
  */
 const request = require("request");
-const fetchMyIP = function(callback) {
+const fetchMyIP = function (callback) {
   const url = "https://api.ipify.org?format=json";
   request(url, (error, response, body) => {
     if (error) {
@@ -17,7 +17,8 @@ const fetchMyIP = function(callback) {
       callback(Error(`Status Code ${response.statusCode} when fetching IP: ${body}`), null);
       return;
     }
-    const ip = JSON.parse(body);
+    const ip = JSON.parse(body).ip;
+    console.log(ip)
     return callback(null, ip);
   });
 };
@@ -35,9 +36,11 @@ const fetchMyIP = function(callback) {
  *     { latitude: '49.27670', longitude: '-123.13000' }
  */
 
-const fetchCoordsByIP = function(ip, callback) {
+const fetchCoordsByIP = function (ip, callback) {
   // should retrun lat/long with free geo IP
+  console.log(ip)
   const url = `https://freegeoip.app/json/${ip}`;
+  console.log(url)
   request(url, (error, response, body) => {
     if (error) {
       callback(error, null);
@@ -45,8 +48,9 @@ const fetchCoordsByIP = function(ip, callback) {
     }
     if (response.statusCode !== 200) {
       callback(Error(`Status Code: ${response.statusCode} when fetching coords for IP response: ${body}`), null);
-
+      return;
     }
+    
     const { latitude, longitude } = JSON.parse(body);
     callback(null, { latitude, longitude });
   });
@@ -66,7 +70,7 @@ const fetchCoordsByIP = function(ip, callback) {
  *     [ { risetime: 134564234, duration: 600 }, ... ]
  */
 
-const fetchFlyOver = function(coords, callback) {
+const fetchFlyOver = function (coords, callback) {
   const url = `http://api.open-notify.org/iss-pass.json?lat=${coords.latitude}&lon=${coords.longitude}`;
   request(url, (error, response, body) => {
     if (error) {
@@ -80,11 +84,43 @@ const fetchFlyOver = function(coords, callback) {
     callback(null, passes);
   });
 };
+//
 
+// iss.js 
+
+/**
+ * Orchestrates multiple API requests in order to determine the next 5 upcoming ISS fly overs for the user's current location.
+ * Input:
+ *   - A callback with an error or results. 
+ * Returns (via Callback):
+ *   - An error, if any (nullable)
+ *   - The fly-over times as an array (null if error):
+ *     [ { risetime: <number>, duration: <number> }, ... ]
+ */
+
+const nextFlyOver = function (callback) {
+  fetchMyIP((error, ip) => {
+    console.log(ip)
+    if (error) {
+      return callback(error, null);
+    }
+    fetchCoordsByIP(ip, (error, loc) => {
+      if (error) {
+        return callback(error, null);
+      }
+      fetchFlyOver(loc, (error, nextPasses) => {
+        if (error) {
+          return callback(error, null);
+        }
+        callback(null, nextPasses);
+      });
+    });
+  });
+};
 
 
 
 //
 
-module.exports = { fetchMyIP, fetchCoordsByIP, fetchFlyOver };
+module.exports = { nextFlyOver };
 

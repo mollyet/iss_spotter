@@ -19,14 +19,31 @@
 //   console.log("Congratulation! Here are your coordinates:", coords);
 // });
 
-const { fetchFlyOver } = require("./iss");
-const expCoords = { latitude: 49.2403, longitude: -124.8026 };
-// const lolNo = { latitude: "cheese", longitude: "bread"};
+// const { fetchFlyOver } = require("./iss");
+// const expCoords = { latitude: 49.2403, longitude: -124.8026 };
+// // const lolNo = { latitude: "cheese", longitude: "bread"};
 
-fetchFlyOver(expCoords, (error, passTimes) => {
-  if (error) {
-    console.log("ISS Who?: ", error);
-    return;
+// fetchFlyOver(expCoords, (error, passTimes) => {
+//   if (error) {
+//     console.log("ISS Who?: ", error);
+//     return;
+//   }
+//   console.log("Space, the final frontier: ISS Flyover times", passTimes);
+// });
+
+const { nextFlyOver } = require("./iss");
+
+const printNextFlyOver = function (passTimes) {
+  for (const pass of passTimes) {
+    const dateTime = new Date(0);
+    dateTime.setUTCSeconds(pass.risetime);
+    console.log(`Next pass at ${dateTime} for ${pass.duration} seconds!`)
   }
-  console.log("Space, the final frontier: ISS Flyover times", passTimes);
+}
+
+nextFlyOver((error, passTimes) => {
+  if(error) {
+    return console.log("Whoops! ", error);
+  }
+  printNextFlyOver(passTimes);
 });
